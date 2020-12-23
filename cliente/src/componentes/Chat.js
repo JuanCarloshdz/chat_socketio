@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 import socket from './Socket'
 import './Chat.css'
+import InfoBar from './InfoBar/InfoBar'
+
+import ReactEmoji from 'react-emoji';
+
 function Chat({ nombre }) {
 
     const [mensaje, setMensaje] = useState('')
@@ -13,16 +17,16 @@ function Chat({ nombre }) {
 
     //obtener la ordenes emitidas por el servidor
     useEffect(() => {
-        socket.on('mensajes', mensajeRecivido  => {
+        socket.on('mensajes', mensajeRecivido => {
             setMensajes([...mensajes, mensajeRecivido]);
         })
         return () => { socket.off() }
-    },[mensajes]);
+    }, [mensajes]);
 
     const divRef = useRef(null);
 
-    useEffect( ()=>{
-        divRef.current.scrollIntoView({behavior: 'smooth'});
+    useEffect(() => {
+        divRef.current.scrollIntoView({ behavior: 'smooth' });
     });
 
     const submit = (event) => {
@@ -32,21 +36,55 @@ function Chat({ nombre }) {
     }
 
 
+    console.log(mensajes);
     return (
-        <div >
+        <div className="chat__outerContainer" >
+            <div className="chat__container">
+                <InfoBar user={nombre} />
 
-            <div className="chat">
-                {mensajes.map((element, indice) =>
-                    <div key={indice}>
-                        <div>{element.nombre}</div><div>{element.mensaje}</div>
-                    </div>)}
-                <div ref={divRef}></div>
+
+                <div className="messages">
+
+                    {mensajes.map((element, indice) =>
+
+                        <>{element.servidor ?  <div className="messageContainer justifyCenter" >
+                            <p className="messageServer">
+                            {element.mensaje }
+                            </p>
+                        </div>
+                             :element.nombre !== nombre ?
+                                <div key={indice} className="messageContainer justifyEnd">
+                                    <p className="sentText pr-10">{element.nombre}</p>
+                                    <div className="messageBox backgroundBlue">
+                                        <p className="messageText colorWhite" > {ReactEmoji.emojify(element.mensaje)} </p>
+                                    </div>
+                                </div> :
+
+
+                                <div key={indice} className="messageContainer justifyStart" >
+                                    <div className="messageBox backgroundLight" >
+                                        <p className="messageText colorDark" > {ReactEmoji.emojify(element.mensaje)} </p>
+                                    </div>
+                                </div>}
+
+                        </>
+                    )}
+                    <div ref={divRef}></div>
+                </div>
+                <form onSubmit={submit} className='form'>
+
+                    <input
+                        className="input"
+                        type="text"
+                        placeholder="Type a message ..."
+                        value={mensaje}
+                        onChange={event => setMensaje(event.target.value)}
+                        onKeyPress={event => event.key === 'Enter' ? submit : null} />
+                    <button className="sendButton"> Send </button>
+                </form>
+
             </div>
-            <form onSubmit={submit} >
-                <label> Escribe su mensaje</label>
-                <textarea cols='30' rows='10' value={mensaje} onChange={event => setMensaje(event.target.value)} />
-                <button> Enviar </button>
-            </form>
+
 
         </div>
     )
